@@ -1,40 +1,42 @@
-// services/telegramService.js
-
 const TelegramBot = require('node-telegram-bot-api');
 
-// Ambil token dan chat ID dari .env
+// Ganti dengan token bot Telegram Anda
 const token = process.env.TELEGRAM_BOT_TOKEN;
-const chatId = process.env.TELEGRAM_CHAT_ID;
+const chatId = process.env.TELEGRAM_CHAT_ID; // ID grup/chat untuk notifikasi
 
-// Non-polling (hanya untuk mengirim pesan)
-const bot = new TelegramBot(token, { polling: false }); 
+const bot = new TelegramBot(token, { polling: true });
 
+// Fungsi untuk kirim notifikasi ke Telegram
 function kirimNotifFollowUp(prospek) {
-    const pesan = `🚨 **NEW LEAD (PROSPEK UNIT)** 🚨
-ID: ${prospek._id}
-Nama: ${prospek.nama}
-No. HP: ${prospek.nomorHp}
-Minat: ${prospek.tipeKendaraan}
-Outlet: ${prospek.areaOutlet}
-    
-Silakan klik tombol di bawah untuk mengambil prospek ini:`;
+  const message = `
+🆕 **PROSPEK BARU**
 
-    const options = {
-        parse_mode: 'Markdown',
-        reply_markup: {
-            inline_keyboard: [
-                [{ 
-                    text: "🔥 AMBIL FOLLOW UP", 
-                    callback_data: `ambil_${prospek._id}` 
-                }]
-            ]
-        }
-    };
-    
-    // Kirim pesan ke Grup Sales
-    bot.sendMessage(chatId, pesan, options)
-        .then(() => console.log('Notifikasi Telegram sukses terkirim.'))
-        .catch(err => console.error('Gagal mengirim notif:', err.message));
+📝 **Nama:** ${prospek.nama}
+📞 **Telepon:** ${prospek.telepon}
+📧 **Email:** ${prospek.email || 'Tidak ada'}
+🚗 **Unit:** ${prospek.unitYangDiminati}
+🔍 **Sumber:** ${prospek.sumber}
+
+⏰ **Waktu:** ${prospek.createdAt.toLocaleString('id-ID')}
+  `;
+
+  const keyboard = {
+    inline_keyboard: [[
+      {
+        text: '✅ Ambil Prospek',
+        callback_data: `ambil_${prospek._id}`
+      }
+    ]]
+  };
+
+  bot.sendMessage(chatId, message, {
+    parse_mode: 'Markdown',
+    reply_markup: keyboard
+  });
 }
 
-module.exports = { kirimNotifFollowUp, bot, chatId }; // Ekspor bot untuk event handling
+module.exports = {
+  kirimNotifFollowUp,
+  bot,
+  chatId
+};
